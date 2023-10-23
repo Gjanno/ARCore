@@ -29,6 +29,7 @@ import io.github.sceneview.ar.node.AugmentedImageNode
 
 class MainActivity : AppCompatActivity() {
     lateinit var sceneView:ArSceneView
+
     lateinit var videoNode: VideoNode
     lateinit var mediaPlayer: MediaPlayer
 
