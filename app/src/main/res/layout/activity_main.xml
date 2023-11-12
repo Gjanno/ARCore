@@ -12,4 +12,14 @@
             android:layout_height="match_parent"
             tools:layout_editor_absoluteY="16dp" tools:layout_editor_absoluteX="-16dp"/>
 
+
+    <Button
+            android:id="@+id/websiteButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Visit Website"
+            android:layout_gravity="bottom|center"
+            android:onClick="openWebsite"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

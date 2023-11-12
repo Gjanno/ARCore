@@ -1,11 +1,14 @@
 package com.pemrogandroid.androidarimage
 
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.isGone
@@ -31,6 +34,11 @@ class MainActivity : AppCompatActivity() {
     lateinit var sceneView:ArSceneView // Create a reference to the AR scene view
     lateinit var videoNode: VideoNode // Create a reference to the VideoNode for playing video
     lateinit var mediaPlayer: MediaPlayer // Create a reference to the MediaPlayer for handling video playback
+    lateinit var websiteButton: Button //setup for button
+    var isVideoPlaying: Boolean = false //flag to check if video is played
+    var tracking: Boolean=false
+
+
 
     /*
         - ArModelNode is a class from the SceneView library for Android AR development.
@@ -44,6 +52,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)// Set the content view to the main layout
 
+
+
         // Initialize the AR scene view and configure it
         sceneView = findViewById<ArSceneView?>(R.id.SceneView).apply {
             this.lightEstimationMode = Config.LightEstimationMode.DISABLED //Disable light estimation
@@ -53,6 +63,10 @@ class MainActivity : AppCompatActivity() {
         // Initialize the MediaPlayer and load a video from resources
         mediaPlayer= MediaPlayer.create(this,R.raw.videoadv)
 
+        // Initialize the websiteButton
+        websiteButton = findViewById(R.id.websiteButton)
+
+
         // Add an AugmentedImageNode to the scene view, representing the target image
         sceneView.addChild(AugmentedImageNode(
             engine = sceneView.engine,
@@ -61,14 +75,20 @@ class MainActivity : AppCompatActivity() {
                 .use(BitmapFactory::decodeStream),
             onUpdate = { node, _ ->
                 if (node.isTracking) {// If the image is being tracked
+                    tracking=true
                     if (!videoNode.player.isPlaying) {
                         sceneView.planeRenderer.isVisible = false // Hide the plane renderer
-                        videoNode.player.start()// Start playing the video
+                        startVideo()// Start playing the video
+                    }
+                    if (videoNode.parent == null) {
+                        node.addChild(videoNode)
                     }
                 } else {// If the image is not being tracked
+                    tracking=false
                     if (videoNode.player.isPlaying) {
                         sceneView.planeRenderer.isVisible = true// Show the plane renderer
-                        videoNode.player.pause()// Stop playing video
+                        pauseVideo()// Stop playing video
+                        videoNode.parent?.removeChild(videoNode)
                     }
                 }
             }
@@ -87,9 +107,54 @@ class MainActivity : AppCompatActivity() {
 
         })
 
+        // Set an OnClickListener for the button
+        websiteButton.setOnClickListener {
+            if (isVideoPlaying) {
+                pauseVideo()//pause the video when opening website
+            }
+            openWebsite()
+        }
+
 
     }
 
+    //Start the video
+    private fun startVideo() {
+        isVideoPlaying = true
+        mediaPlayer.start()
+    }
+
+
+    //Pause video
+    private fun pauseVideo() {
+        isVideoPlaying = false
+        mediaPlayer.pause()
+    }
+    override fun onPause() {
+        super.onPause()
+
+        // Pause the video when the app is not in the foreground
+        if (videoNode.player.isPlaying) {
+            pauseVideo()
+        }
+    }
+    override fun onResume() {
+        super.onResume()
+
+        // Logic to start or pause the video based on tracking
+        if (tracking && !videoNode.player.isPlaying) {
+            startVideo()
+        } else if (!tracking && videoNode.player.isPlaying) {
+            pauseVideo()
+        }
+    }
+
+    // Function to open the website when the button is clicked
+    private fun openWebsite() {
+        val websiteUrl = "https://miland.co.id/" // Replace with your website URL
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(websiteUrl))
+        startActivity(intent)
+    }
     override fun onDestroy() {
         super.onDestroy()
         mediaPlayer.release()// Release the MediaPlayer resources when the activity is destroyed
